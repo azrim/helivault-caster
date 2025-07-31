@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { NeynarAPIClient, isApiErrorResponse, Configuration } from "@neynar/nodejs-sdk";
-import { createKysely } from '@vercel/postgres';
+import { createKysely } from '@vercel/postgres-kysely';
 import { ethers } from 'ethers';
+import { OnConflictBuilder, Generated } from 'kysely';
 
 interface Database {
     faucet_claims: {
-        id: number;
+        id: Generated<number>;
         fid: number;
         last_claimed_at: Date;
     };
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
         await db
             .insertInto('faucet_claims')
             .values({ fid, last_claimed_at: new Date() })
-            .onConflict((oc) => oc
+            .onConflict((oc: OnConflictBuilder<Database, 'faucet_claims'>) => oc
                 .column('fid')
                 .doUpdateSet({ last_claimed_at: new Date() })
             )
