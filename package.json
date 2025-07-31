@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@neynar/nodejs-sdk": "^3.30.0",
+    "@vercel/postgres": "^0.10.0",
+    "ethers": "^6.15.0"
+  }
+}
