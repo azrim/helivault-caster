@@ -1,6 +1,6 @@
 -- This script contains the SQL command to create the 'faucet_claims' table.
--- To execute, copy this command and run it in the "Query" tab of your
--- Vercel Postgres database dashboard.
+-- To execute, copy this command and run it in the SQL editor of your Neon 
+-- project or any other Postgres database client.
 
 CREATE TABLE faucet_claims (
     id SERIAL PRIMARY KEY,
