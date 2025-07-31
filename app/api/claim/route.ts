@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { NeynarAPIClient, isApiErrorResponse, Configuration } from "@neynar/nodejs-sdk";
-import { sql } from '@vercel/postgres';
+import { createKysely } from '@vercel/postgres';
 import { ethers } from 'ethers';
+
+interface Database {
+    faucet_claims: {
+        id: number;
+        fid: number;
+        last_claimed_at: Date;
+    };
+}
+
+const db = createKysely<Database>({
+    connectionString: process.env.STORAGE_URL,
+});
 
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || '';
 const FAUCET_PRIVATE_KEY = process.env.FAUCET_PRIVATE_KEY || '';
@@ -27,12 +39,14 @@ export async function POST(req: NextRequest) {
         const { fid } = action.interactor;
 
         // 1. Check cooldown
-        const { rows } = await sql`
-            SELECT last_claimed_at FROM faucet_claims WHERE fid = ${fid};
-        `;
+        const result = await db
+            .selectFrom('faucet_claims')
+            .select('last_claimed_at')
+            .where('fid', '=', fid)
+            .executeTakeFirst();
 
-        if (rows.length > 0) {
-            const lastClaimedAt = new Date(rows[0].last_claimed_at);
+        if (result) {
+            const lastClaimedAt = new Date(result.last_claimed_at);
             const cooldownEndTime = new Date(lastClaimedAt.getTime() + COOLDOWN_PERIOD_HOURS * 60 * 60 * 1000);
 
             if (new Date() < cooldownEndTime) {
@@ -68,12 +82,14 @@ export async function POST(req: NextRequest) {
         await tx.wait();
 
         // 4. Update database
-        await sql`
-            INSERT INTO faucet_claims (fid, last_claimed_at)
-            VALUES (${fid}, NOW())
-            ON CONFLICT (fid)
-            DO UPDATE SET last_claimed_at = NOW();
-        `;
+        await db
+            .insertInto('faucet_claims')
+            .values({ fid, last_claimed_at: new Date() })
+            .onConflict((oc) => oc
+                .column('fid')
+                .doUpdateSet({ last_claimed_at: new Date() })
+            )
+            .execute();
 
         // 5. Return success frame
         return new NextResponse(getFrameHtml({
