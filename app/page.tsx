@@ -1,10 +1,13 @@
-import type { Metadata } from "next";
-
-const APP_URL = process.env.VERCEL_URL || "http://localhost:3000";
+import { Metadata } from "next";
+import { headers } from "next/headers";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const imageUrl = `${APP_URL}/images/initial.svg`;
-  const postUrl = `${APP_URL}/api/claim`;
+  const host = headers().get('host');
+  const protocol = host?.startsWith('localhost') ? 'http' : 'https';
+  const appUrl = `${protocol}://${host}`;
+
+  const imageUrl = `${appUrl}/images/initial.svg`;
+  const postUrl = `${appUrl}/api/claim`;
 
   return {
     title: "Helios Faucet",
