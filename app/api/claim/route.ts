@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { NeynarAPIClient, isApiErrorResponse } from "@neynar/nodejs-sdk";
+import { NeynarAPIClient, isApiErrorResponse, Configuration } from "@neynar/nodejs-sdk";
 import { sql } from '@vercel/postgres';
 import { ethers } from 'ethers';
 
@@ -11,7 +11,7 @@ const APP_URL = process.env.VERCEL_URL || 'http://localhost:3000';
 const COOLDOWN_PERIOD_HOURS = 6;
 
 export async function POST(req: NextRequest) {
-    const neynarClient = new NeynarAPIClient(NEYNAR_API_KEY);
+    const neynarClient = new NeynarAPIClient(new Configuration({apiKey: NEYNAR_API_KEY}));
     const body = await req.json();
 
     try {
