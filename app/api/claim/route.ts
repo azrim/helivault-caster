@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     try {
-        const { isValid, action } = await neynarClient.validateFrameAction(body.trustedData.messageBytes);
+        const { action } = await neynarClient.validateFrameAction(body.trustedData.messageBytes);
 
-        if (!isValid || !action) {
+        if (!action) {
             return new NextResponse(getFrameHtml({
                 imageUrl: `${APP_URL}/images/error.svg`,
                 message: "Invalid frame action"
@@ -44,9 +44,9 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Get user's wallet address
-        const userResponse = await neynarClient.fetchBulkUsers([fid]);
+        const userResponse = await neynarClient.fetchBulkUsers({ fids: [fid] });
         const user = userResponse.users[0];
-        const recipientAddress = user?.verifications?.[0];
+        const recipientAddress = user?.verified_addresses.eth_addresses[0];
 
         if (!recipientAddress) {
             return new NextResponse(getFrameHtml({
